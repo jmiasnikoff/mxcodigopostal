@@ -15,7 +15,7 @@ class Mxcodigopostal extends Module
         $this->name = 'mxcodigopostal';
         $this->tab = 'front_office_features';
         $this->version = '1.0.0';
-        $this->ps_versions_compliancy = array('min' => '1.7.1.0', 'max' => _PS_VERSION_);
+        $this->ps_versions_compliancy = array('min' => '8.2.0', 'max' => _PS_VERSION_);
         $this->author = 'Jesús Franco Miasnikoff';
         $this->need_instance = 0;
 

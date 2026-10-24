@@ -16,13 +16,13 @@ class MxcodigopostalAjaxModuleFrontController extends ModuleFrontController
         $postcode = Tools::getValue('cp');
 
         if (!preg_match('/^\d{5}$/', (string) $postcode)) {
-            $this->ajaxDie(json_encode(array('success' => false, 'message' => 'CP inválido')));
+            exit(json_encode(array('success' => false, 'message' => 'CP inválido')));
         }
 
         $table = _DB_PREFIX_.'carriercdmx_zipcodes';
 
         if (!$this->tableExists($table)) {
-            $this->ajaxDie(json_encode(array('success' => false, 'message' => 'Catálogo no disponible')));
+            exit(json_encode(array('success' => false, 'message' => 'Catálogo no disponible')));
         }
 
         $rows = Db::getInstance(_PS_USE_SQL_SLAVE_)->executeS('
@@ -34,7 +34,7 @@ class MxcodigopostalAjaxModuleFrontController extends ModuleFrontController
         ');
 
         if (!$rows) {
-            $this->ajaxDie(json_encode(array('success' => false, 'message' => 'CP no encontrado')));
+            exit(json_encode(array('success' => false, 'message' => 'CP no encontrado')));
         }
 
         $city = $rows[0]['city'];
@@ -68,7 +68,7 @@ class MxcodigopostalAjaxModuleFrontController extends ModuleFrontController
             return $row['colonia'];
         }, $rows)));
 
-        $this->ajaxDie(json_encode(array(
+        exit(json_encode(array(
             'success' => true,
             'city' => $city,
             'id_state' => $idState,

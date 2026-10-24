@@ -1,0 +1,48 @@
+.js-mxcodigopostal-colonia {
+    margin-top: 10px;
+}
+
+.mxcodigopostal-autocomplete {
+    position: relative;
+}
+
+.js-mxcodigopostal-menu {
+    display: none;
+    top: 100%;
+    left: 0;
+    right: 0;
+    width: auto;
+    max-height: 220px;
+    overflow-y: auto;
+    z-index: 1050;
+}
+
+/* El theme no define .dropdown-menu.show { display:block } vía CSS puro (su plugin de
+   Bootstrap lo controla por JS/Popper); se fuerza aquí para no depender de eso. */
+.js-mxcodigopostal-menu.show {
+    display: block !important;
+}
+
+.js-mxcodigopostal-menu .dropdown-item.active {
+    background-color: #f8f9fa;
+}
+
+.js-mxcodigopostal-menu button.dropdown-item {
+    display: block;
+    width: 100%;
+    padding: 0.25rem 1rem;
+    clear: both;
+    text-align: inherit;
+    white-space: normal;
+    background-color: transparent;
+    border: 0;
+}
+
+.js-mxcodigopostal-menu button.dropdown-item:hover,
+.js-mxcodigopostal-menu button.dropdown-item:focus {
+    background-color: #f8f9fa;
+}
+
+.js-mxcodigopostal-menu button.dropdown-item:nth-child(even) {
+    background-color: #f2f2f2;
+}

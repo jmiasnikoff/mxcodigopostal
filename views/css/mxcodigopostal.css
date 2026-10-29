@@ -23,9 +23,23 @@
     display: block !important;
 }
 
+/* Colores de la tienda: cada una define --theme-color (Boners azul, ToLove rosa), así que la
+   misma regla sirve a ambas. El selector lleva el contenedor para ganar a .dropdown-menu de
+   Bootstrap sin depender del orden de carga de las hojas. */
+.mxcodigopostal-autocomplete .js-mxcodigopostal-menu {
+    --mxcp-color: var(--maincolor, var(--theme-color, #00417D));
+    background-color: #fff;
+    border: 1px solid var(--mxcp-color);
+    border-radius: 4px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+}
+
+/* ORIGINAL:
 .js-mxcodigopostal-menu .dropdown-item.active {
     background-color: #f8f9fa;
 }
+   Ahora la opción activa (flechas del teclado) usa el color sólido de la tienda, igual que el
+   hover con el ratón (más abajo). */
 
 .js-mxcodigopostal-menu button.dropdown-item {
     display: block;
@@ -40,9 +54,22 @@
 
 .js-mxcodigopostal-menu button.dropdown-item:hover,
 .js-mxcodigopostal-menu button.dropdown-item:focus {
-    background-color: #f8f9fa;
+    /* ORIGINAL: background-color: #f8f9fa; */
+    /* Con el puntero (o el foco) se ve igual que la opción activa del teclado: color sólido de
+       la tienda y texto blanco (el theme pintaba el texto del hover con el color de la tienda). */
+    color: #fff;
+    background-color: var(--mxcp-color);
 }
 
+/* ORIGINAL (filas alternadas grises, ya no se usan: el menú es blanco):
 .js-mxcodigopostal-menu button.dropdown-item:nth-child(even) {
     background-color: #f2f2f2;
+}
+*/
+
+.js-mxcodigopostal-menu button.dropdown-item.active,
+.js-mxcodigopostal-menu button.dropdown-item.active:hover,
+.js-mxcodigopostal-menu button.dropdown-item.active:focus {
+    color: #fff;
+    background-color: var(--mxcp-color);
 }

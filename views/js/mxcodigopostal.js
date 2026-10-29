@@ -17,6 +17,14 @@
         return $field.closest('.form-group.row');
     }
 
+    // En el checkout de una página (ps_onepagecheckout) el formulario inline y los modales de
+    // dirección están dentro del MISMO <form id="opc-form">, así que closest('form') alcanzaría
+    // los campos de otras secciones. Se acota al contenedor propio del CP; en el formulario
+    // clásico no hay ninguno de esos ids y el más cercano sigue siendo el <form>.
+    function fieldsScope($postcode) {
+        return $postcode.closest('#opc-delivery-address-fields, #modal-delivery, form');
+    }
+
     // Lee las clases de grid (col-md-X) del propio campo Código Postal en vez de asumir
     // col-md-3/col-md-6: cada theme usa proporciones distintas (devstore: 3/6, boners: 2/10).
     function gridClasses($postcode) {
@@ -37,8 +45,18 @@
     // en vez de crear uno duplicado.
     function findColoniaInput($postcode) {
         var $match = null;
+        var $scope = fieldsScope($postcode);
 
-        $postcode.closest('form').find('.form-group.row label').each(function () {
+        // Checkout de una página: el campo estándar "other" es siempre la colonia (el tema solo
+        // lo rotula así), sin depender del texto traducido de la etiqueta.
+        if (!$scope.is('form')) {
+            $match = $scope.find('input[name="other"]').first();
+
+            return $match.length ? $match : null;
+        }
+
+        // ORIGINAL: $postcode.closest('form').find('.form-group.row label').each(function () {
+        $scope.find('.form-group.row label').each(function () {
             if ($(this).text().trim().toLowerCase() === 'colonia') {
                 var $candidate = $(this).closest('.form-group.row').find('input[type="text"]').first();
                 if ($candidate.length) {
@@ -56,9 +74,13 @@
     // Se reordena por JS (mover el .form-group.row del theme) en vez de tocar el .tpl del theme.
     function reorderColoniaField($postcode, $native) {
         var $nativeRow = $native.closest('.form-group.row');
+        var $postcodeRow = fieldWrapper($postcode);
 
-        if ($nativeRow.length) {
-            fieldWrapper($postcode).after($nativeRow);
+        // ORIGINAL: if ($nativeRow.length) { fieldWrapper($postcode).after($nativeRow); }
+        // Se mueve solo si hace falta: el checkout de una página ya pinta Colonia justo después
+        // del CP, y reinsertar un nodo que ya está bien dispara mutaciones y puede quitar el foco.
+        if ($nativeRow.length && !$postcodeRow.next().is($nativeRow)) {
+            $postcodeRow.after($nativeRow);
         }
     }
 
@@ -97,7 +119,9 @@
                     // del DOM el elemento que tenía el foco dispara un salto de scroll.
                     .on('mousedown', function (e) {
                         e.preventDefault();
-                        $input.val(colonia);
+                        // ORIGINAL: $input.val(colonia); — sin evento el autosave del OPC no guarda la colonia elegida.
+                        // El 'input' reabre el menú de forma síncrona y la línea siguiente lo cierra.
+                        setField($input, colonia);
                         $menu.removeClass('show').empty();
                     })
                     .appendTo($menu);
@@ -135,7 +159,8 @@
                 highlightActive();
             } else if (e.key === 'Enter' && activeIndex >= 0) {
                 e.preventDefault();
-                $input.val($items.eq(activeIndex).text());
+                // ORIGINAL: $input.val($items.eq(activeIndex).text()); (mismo motivo que en mousedown)
+                setField($input, $items.eq(activeIndex).text());
                 $menu.removeClass('show').empty();
             } else if (e.key === 'Escape') {
                 $menu.removeClass('show');
@@ -173,22 +198,39 @@
         // Se limpia el valor anterior siempre: si el usuario ya tenía una colonia escrita (de
         // una dirección guardada o de un CP previo) y cambia el CP, ese valor viejo ya no
         // necesariamente corresponde al nuevo CP.
+        // El valor se asigna ANTES de attachAutocomplete: su handler de 'input' abre el menú, y
+        // el evento programático de setField no debe abrirlo (attachAutocomplete lo reinicia).
+        // ORIGINAL: $input.val(colonias[0]); / $input.val('').attr(..) en cada rama
         if (colonias.length === 1) {
-            $input.val(colonias[0]);
+            setField($input, colonias[0]);
         } else if (colonias.length > 1) {
-            $input.val('').attr('placeholder', 'Escribe o elige tu colonia');
+            setField($input, '');
+            $input.attr('placeholder', 'Escribe o elige tu colonia');
         } else {
-            $input.val('').attr('placeholder', 'Escribe la colonia');
+            setField($input, '');
+            $input.attr('placeholder', 'Escribe la colonia');
         }
 
         attachAutocomplete($input, colonias);
     }
 
-    function clearAddressFields($postcode) {
-        var $form = $postcode.closest('form');
+    // Rellena un campo y avisa con un evento DOM NATIVO (bubbles). El checkout de una página
+    // se entera de los cambios por listeners delegados en body (autosave de la dirección) y por
+    // addEventListener en #opc-form (validación); un .val() o un .trigger() de jQuery no llega
+    // a estos últimos. El evento nativo sí llega también a los handlers jQuery y al formulario
+    // clásico, donde es inofensivo.
+    function setField($field, value) {
+        $field.val(value).each(function () {
+            this.dispatchEvent(new Event(this.tagName === 'SELECT' ? 'change' : 'input', {bubbles: true}));
+        });
+    }
 
-        $form.find('[name="city"]').val('');
-        $form.find('[name="id_state"]').val('').trigger('change');
+    function clearAddressFields($postcode) {
+        // ORIGINAL: var $form = $postcode.closest('form'); y .val('') / .val('').trigger('change')
+        var $scope = fieldsScope($postcode);
+
+        setField($scope.find('[name="city"]'), '');
+        setField($scope.find('[name="id_state"]'), '');
 
         buildColoniaField($postcode, []);
     }
@@ -206,16 +248,17 @@
                 return;
             }
 
-            var $form = $postcode.closest('form');
-            var $city = $form.find('[name="city"]');
-            var $state = $form.find('[name="id_state"]');
+            // ORIGINAL: var $form = $postcode.closest('form'); y $city.val(..) / $state.val(..).trigger('change')
+            var $scope = fieldsScope($postcode);
+            var $city = $scope.find('[name="city"]');
+            var $state = $scope.find('[name="id_state"]');
 
             if ($city.length && response.city) {
-                $city.val(response.city);
+                setField($city, response.city);
             }
 
             if ($state.length && response.id_state) {
-                $state.val(response.id_state).trigger('change');
+                setField($state, response.id_state);
             }
 
             buildColoniaField($postcode, response.colonias || []);
